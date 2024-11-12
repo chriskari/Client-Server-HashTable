@@ -18,12 +18,12 @@ std::map<Operation, std::string> operation_map = {
 
 int main()
 {
-    std::cout << "************************* HashMap client started *************************\n";
+    std::cout << "*********** HashTable client started ***********" << std::endl;
 
+    printMenu();
     char userInput;
     while (true)
     {
-        printMenu();
         std::cin >> userInput;
         userInput = std::toupper(userInput);
 
@@ -44,11 +44,10 @@ int main()
             handleDelete(key);
             break;
         case 'X':
-            shm_unlink(shm_name);
-            std::cout << "************************* HashMap client stopped *************************\n";
+            std::cout << "*********** HashTable client stopped ***********" << std::endl;
             return 0;
         default:
-            std::cout << "Invalid command. Please use one of the following: I, R, D, X\n";
+            std::cout << "Invalid command. Please use one of the following: I, R, D, X" << std::endl;
             break;
         }
     }
@@ -59,14 +58,14 @@ void handleRequest(Request &request)
     int shm_fd = shm_open(shm_name, O_RDWR, 0666);
     if (shm_fd == -1)
     {
-        std::cerr << "Failed to open shared memory\n";
+        std::cerr << "Failed to open shared memory" << std::endl;
         return;
     }
 
     Request *sharedRequest = static_cast<Request *>(mmap(0, shm_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
     if (sharedRequest == MAP_FAILED)
     {
-        std::cerr << "mmap failed\n";
+        std::cerr << "mmap failed" << std::endl;
         munmap(sharedRequest, shm_SIZE);
         close(shm_fd);
         shm_unlink(shm_name);
@@ -74,8 +73,17 @@ void handleRequest(Request &request)
     }
 
     *sharedRequest = request;
-    std::cout << "Sent request - " << operation_map[request.operation]
-              << " <" << request.key << ", " << request.value << ">" << std::endl;
+    std::cout << "------------------------------------------------" << std::endl;
+    if (request.operation == Operation::INSERT)
+    {
+        std::cout << "Sent request - " << operation_map[request.operation]
+                  << " <" << request.key << "," << request.value << ">" << std::endl;
+    }
+    else
+    {
+        std::cout << "Sent request - " << operation_map[request.operation]
+                  << " key: " << request.key << std::endl;
+    }
 
     // Wait for the server to process the request
     while (!sharedRequest->processed)
@@ -90,13 +98,13 @@ void handleRequest(Request &request)
 
 void printMenu()
 {
-    std::cout << "What action would you like to perform?\n"
-              << "------------------------------------------------\n"
-              << "Use 'I' to insert an entry into the HashMap\n"
-              << "Use 'R' to read an entry in the HashMap\n"
-              << "Use 'D' to delete an entry from the HashMap\n"
-              << "Use 'X' to exit the program\n"
-              << "------------------------------------------------\n";
+    std::cout << "You can choose between the following actions:" << std::endl
+              << "------------------------------------------------" << std::endl
+              << "Use 'I' to insert an entry into the hash table" << std::endl
+              << "Use 'R' to read an entry in the hash table" << std::endl
+              << "Use 'D' to delete an entry from the hash table" << std::endl
+              << "Use 'X' to exit the program" << std::endl
+              << "------------------------------------------------" << std::endl;
 }
 
 int getKey()
@@ -134,7 +142,8 @@ void handleInsert(int key, int value)
 
     if (request.result)
     {
-        std::cout << "Insert " << " <" << request.key << ", " << request.value << "> successful!" << std::endl;
+        std::cout << "Insert entry" << "<" << request.key << "," << request.value << "> successful!" << std::endl;
+        std::cout << "------------------------------------------------" << std::endl;
     }
 }
 
@@ -145,12 +154,13 @@ void handleRead(int key)
 
     if (request.result)
     {
-        std::cout << "Reading value successful: <" << request.key << ", " << request.value << ">" << std::endl;
+        std::cout << "Read successful. Value: <" << request.value << ">" << std::endl;
     }
     else
     {
-        std::cout << "Reading failed. Key: " << request.key << " not found." << std::endl;
+        std::cout << "Read failed. Key <" << request.key << "> not found." << std::endl;
     }
+    std::cout << "------------------------------------------------" << std::endl;
 }
 
 void handleDelete(int key)
@@ -160,10 +170,11 @@ void handleDelete(int key)
 
     if (request.result)
     {
-        std::cout << "Deletion of key: " << request.key << "> successful!" << std::endl;
+        std::cout << "Delete key" << "<" << request.key << "> successful!" << std::endl;
     }
     else
     {
-        std::cout << "Deletion failed. Key: " << request.key << " not found." << std::endl;
+        std::cout << "Delete failed. Key: " << request.key << " not found." << std::endl;
     }
+    std::cout << "------------------------------------------------" << std::endl;
 }

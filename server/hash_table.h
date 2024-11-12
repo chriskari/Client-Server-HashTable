@@ -20,8 +20,8 @@ struct HashBucket
 
 class HashTable
 {
-    std::vector<HashBucket> table;
     int size;
+    std::vector<HashBucket> table;
 
     int hashFunction(int key) const;
 

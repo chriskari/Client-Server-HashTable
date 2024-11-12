@@ -19,13 +19,15 @@ int main()
     Request *request = static_cast<Request *>(mmap(0, shm_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
     if (request == MAP_FAILED)
     {
-        std::cerr << "Server: mmap failed\n";
+        std::cerr << "Server: mmap failed" << std::endl;
         close(shm_fd);
         shm_unlink(shm_name);
         return 1;
     }
 
-    std::cout << "Server: Shared memory created and initialized\n";
+    std::cout << "Shared memory created and initialized" << std::endl;
+    std::cout << "*********** HashTable server started ***********" << std::endl;
+    std::cout << "------------------------------------------------" << std::endl;
 
     while (true)
     {
@@ -34,8 +36,7 @@ int main()
         {
             processRequest(hashTable, *request);
         }
-        std::cerr << "Waiting for incoming requests...\n";
-        usleep(3000000); // Wait for 3000ms before trying again
+        usleep(100);
     }
 
     munmap(request, shm_SIZE);
@@ -47,22 +48,20 @@ int main()
 
 void processRequest(HashTable &hashTable, Request &request)
 {
-    std::cout << "Server: Processing request:\n";
-    std::cout << "Operation: " << static_cast<int>(request.operation) << "\n";
-    std::cout << "Key: " << request.key << "\n";
-    std::cout << "Value: " << request.value << "\n";
-
     switch (request.operation)
     {
     case Operation::INSERT:
         hashTable.insert(request.key, request.value);
         request.result = true;
+        std::cout << "Processed request: Insert <" << request.key << "," << request.value << "> - " << "Success!" << std::endl;
         break;
     case Operation::READ:
         request.result = hashTable.read(request.key, request.value);
+        std::cout << "Processed request: Read <" << request.key << ",?> - " << (request.result ? "Success!" : "Failure!") << std::endl;
         break;
     case Operation::DELETE:
         request.result = hashTable.remove(request.key);
+        std::cout << "Processed request: Delete <" << request.key << ",?> - " << (request.result ? "Success!" : "Failure!") << std::endl;
         break;
     default:
         request.result = false; // Unsupported operation
@@ -74,10 +73,11 @@ void processRequest(HashTable &hashTable, Request &request)
 int getTableSize()
 {
     int tableSize;
-    std::cout << "Select a size for the hashmap: ";
+    std::cout << "Select a size for the hash table: ";
     while (!(std::cin >> tableSize))
     {
-        std::cout << "Invalid input. Please enter an integer for the value.\nValue: ";
+        std::cout << "Invalid input. Please enter an integer for the value." << std::endl
+                  << "Value: ";
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
