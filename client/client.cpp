@@ -7,9 +7,9 @@ void handleRequest(Request &request);
 void printMenu();
 int getKey();
 int getValue();
-void handleInsert(int key, int value);
-void handleRead(int key);
-void handleDelete(int key);
+void handleInsert();
+void handleRead();
+void handleDelete();
 
 std::map<Operation, std::string> operation_map = {
     {Operation::INSERT, "INSERT"},
@@ -26,22 +26,16 @@ int main()
     {
         std::cin >> userInput;
         userInput = std::toupper(userInput);
-
-        int key, value;
         switch (userInput)
         {
         case 'I':
-            key = getKey();
-            value = getValue();
-            handleInsert(key, value);
+            handleInsert();
             break;
         case 'R':
-            key = getKey();
-            handleRead(key);
+            handleRead();
             break;
         case 'D':
-            key = getKey();
-            handleDelete(key);
+            handleDelete();
             break;
         case 'X':
             std::cout << "*********** HashTable client stopped ***********" << std::endl;
@@ -77,12 +71,12 @@ void handleRequest(Request &request)
     if (request.operation == Operation::INSERT)
     {
         std::cout << "Sent request - " << operation_map[request.operation]
-                  << " <" << request.key << "," << request.value << ">" << std::endl;
+                  << " entry <" << request.key << "," << request.value << ">" << std::endl;
     }
     else
     {
         std::cout << "Sent request - " << operation_map[request.operation]
-                  << " key: " << request.key << std::endl;
+                  << " key <" << request.key << ">" << std::endl;
     }
 
     // Wait for the server to process the request
@@ -135,46 +129,50 @@ int getValue()
     return value;
 }
 
-void handleInsert(int key, int value)
+void handleInsert()
 {
+    int key = getKey();
+    int value = getValue();
     Request request{Operation::INSERT, key, value};
     handleRequest(request);
 
     if (request.result)
     {
-        std::cout << "Insert entry" << "<" << request.key << "," << request.value << "> successful!" << std::endl;
+        std::cout << "INSERT entry " << "<" << request.key << "," << request.value << "> successful!" << std::endl;
         std::cout << "------------------------------------------------" << std::endl;
     }
 }
 
-void handleRead(int key)
+void handleRead()
 {
+    int key = getKey();
     Request request{Operation::READ, key, 0};
     handleRequest(request);
 
     if (request.result)
     {
-        std::cout << "Read successful. Value: <" << request.value << ">" << std::endl;
+        std::cout << "READ successful! Value: <" << request.value << ">" << std::endl;
     }
     else
     {
-        std::cout << "Read failed. Key <" << request.key << "> not found." << std::endl;
+        std::cout << "READ failed! Key <" << request.key << "> not found." << std::endl;
     }
     std::cout << "------------------------------------------------" << std::endl;
 }
 
-void handleDelete(int key)
+void handleDelete()
 {
+    int key = getKey();
     Request request{Operation::DELETE, key, 0};
     handleRequest(request);
 
     if (request.result)
     {
-        std::cout << "Delete key" << "<" << request.key << "> successful!" << std::endl;
+        std::cout << "DELETE key " << "<" << request.key << "> successful!" << std::endl;
     }
     else
     {
-        std::cout << "Delete failed. Key: " << request.key << " not found." << std::endl;
+        std::cout << "DELETE failed! Key <" << request.key << "> not found." << std::endl;
     }
     std::cout << "------------------------------------------------" << std::endl;
 }

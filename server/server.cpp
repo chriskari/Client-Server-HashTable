@@ -53,15 +53,15 @@ void processRequest(HashTable &hashTable, Request &request)
     case Operation::INSERT:
         hashTable.insert(request.key, request.value);
         request.result = true;
-        std::cout << "Processed request: Insert <" << request.key << "," << request.value << "> - " << "Success!" << std::endl;
+        std::cout << "Processed request: Insert entry <" << request.key << "," << request.value << "> - " << "Success!" << std::endl;
         break;
     case Operation::READ:
         request.result = hashTable.read(request.key, request.value);
-        std::cout << "Processed request: Read <" << request.key << ",?> - " << (request.result ? "Success!" : "Failure!") << std::endl;
+        std::cout << "Processed request: Read key <" << request.key << "> - " << (request.result ? "Success!" : "Failure!") << std::endl;
         break;
     case Operation::DELETE:
         request.result = hashTable.remove(request.key);
-        std::cout << "Processed request: Delete <" << request.key << ",?> - " << (request.result ? "Success!" : "Failure!") << std::endl;
+        std::cout << "Processed request: Delete key <" << request.key << "> - " << (request.result ? "Success!" : "Failure!") << std::endl;
         break;
     default:
         request.result = false; // Unsupported operation
@@ -74,9 +74,9 @@ int getTableSize()
 {
     int tableSize;
     std::cout << "Select a size for the hash table: ";
-    while (!(std::cin >> tableSize))
+    while (!(std::cin >> tableSize) || tableSize <= 0)
     {
-        std::cout << "Invalid input. Please enter an integer for the value." << std::endl
+        std::cout << "Invalid input. Please enter a positive integer for the table size." << std::endl
                   << "Value: ";
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
