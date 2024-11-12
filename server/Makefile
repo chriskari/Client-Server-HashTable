@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = g++
-CFLAGS = -Wall -g -std=c++17 -pthread
+CFLAGS = -Wall -g -std=c++17 -pthread -Icommon
 
 # Target executable name
 TARGET = server_program
@@ -17,7 +17,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET) $(CFLAGS)
 
 # Rule to compile .cpp files into .o files
-%.o: %.cpp server.h hash_table.h
+%.o: %.cpp common/shared.h hash_table.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up the build files

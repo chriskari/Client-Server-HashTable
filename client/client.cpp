@@ -1,7 +1,5 @@
-#include "client.h"
-
-const char *shm_name = "/hash_table_shm";
-const int shm_SIZE = sizeof(Request);
+#include "../common/shared.h"
+#include <map>
 
 void handleRequest(Request &request);
 void printMenu();
@@ -55,18 +53,25 @@ void handleRequest(Request &request)
         std::cerr << "Failed to open shared memory" << std::endl;
         return;
     }
-
-    Request *sharedRequest = static_cast<Request *>(mmap(0, shm_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
-    if (sharedRequest == MAP_FAILED)
+    SharedQueue *queue = static_cast<SharedQueue *>(mmap(0, shm_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
+    if (queue == MAP_FAILED)
     {
         std::cerr << "mmap failed" << std::endl;
-        munmap(sharedRequest, shm_SIZE);
         close(shm_fd);
-        shm_unlink(shm_name);
         return;
     }
 
-    *sharedRequest = request;
+    while (queue->isFull())
+    {
+        usleep(100);
+    }
+
+    int currentHead = queue->head.load();
+    request.processed = false;
+    queue->requests[currentHead] = request;
+    Request &sharedRequest = queue->requests[currentHead];
+    queue->head.store((currentHead + 1) % SharedQueue::QUEUE_SIZE);
+
     std::cout << "------------------------------------------------" << std::endl;
     if (request.operation == Operation::INSERT)
     {
@@ -79,14 +84,13 @@ void handleRequest(Request &request)
                   << " key <" << request.key << ">" << std::endl;
     }
 
-    // Wait for the server to process the request
-    while (!sharedRequest->processed)
+    while (!sharedRequest.processed)
     {
         usleep(100);
     }
-    request = *sharedRequest;
+    request = sharedRequest;
 
-    munmap(sharedRequest, shm_SIZE);
+    munmap(queue, shm_SIZE);
     close(shm_fd);
 }
 

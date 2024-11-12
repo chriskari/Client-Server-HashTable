@@ -1,8 +1,5 @@
-#include "server.h"
+#include "../common/shared.h"
 #include "hash_table.h"
-
-const char *shm_name = "/hash_table_shm";
-const int shm_SIZE = sizeof(Request);
 
 void processRequest(HashTable &hashTable, Request &request);
 int getTableSize();
@@ -15,15 +12,15 @@ int main()
     int shm_fd = shm_open(shm_name, O_CREAT | O_RDWR, 0666);
     ftruncate(shm_fd, shm_SIZE);
 
-    // Map the shared memory object to the address space
-    Request *request = static_cast<Request *>(mmap(0, shm_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
-    if (request == MAP_FAILED)
+    SharedQueue *queue = static_cast<SharedQueue *>(mmap(0, shm_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
+    if (queue == MAP_FAILED)
     {
-        std::cerr << "Server: mmap failed" << std::endl;
+        std::cerr << "mmap failed" << std::endl;
         close(shm_fd);
         shm_unlink(shm_name);
         return 1;
     }
+    new (queue) SharedQueue();
 
     std::cout << "Shared memory created and initialized" << std::endl;
     std::cout << "*********** HashTable server started ***********" << std::endl;
@@ -31,15 +28,22 @@ int main()
 
     while (true)
     {
-        // Wait for a new request from the client
-        if (!request->processed)
+        if (!queue->isEmpty())
         {
-            processRequest(hashTable, *request);
+            int currentTail = queue->tail.load();
+            Request &request = queue->requests[currentTail];
+
+            if (!request.processed)
+            {
+                processRequest(hashTable, request);
+                request.processed = true;
+                queue->tail.store((currentTail + 1) % SharedQueue::QUEUE_SIZE);
+            }
         }
         usleep(100);
     }
 
-    munmap(request, shm_SIZE);
+    munmap(queue, shm_SIZE);
     close(shm_fd);
     shm_unlink(shm_name);
 

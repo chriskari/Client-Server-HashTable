@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = g++
-CFLAGS = -Wall -g -std=c++17
+CFLAGS = -Wall -g -std=c++17 -Icommon
 
 # Target executable name
 TARGET = client_program
@@ -17,7 +17,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET)
 
 # Rule to compile .cpp files into .o files
-%.o: %.cpp client.h
+%.o: %.cpp common/shared.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up the build files
