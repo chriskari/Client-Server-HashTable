@@ -1,6 +1,7 @@
 #ifndef SHARED_H
 #define SHARED_H
 
+#include "Operation.h"
 #include <iostream>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -9,13 +10,6 @@
 #include <limits>
 #include <atomic>
 #include <mutex>
-
-enum class Operation
-{
-    INSERT,
-    READ,
-    DELETE
-};
 
 struct Request
 {

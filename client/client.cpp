@@ -1,31 +1,20 @@
 #include "../common/shared.h"
-#include <map>
+#include "UserInterface.h"
 
 void handleRequest(Request &request);
 int getAndIncrementHead(SharedQueue *queue);
-void printMenu();
-int getKey();
-int getValue();
 void handleInsert();
 void handleRead();
 void handleDelete();
 
-std::map<Operation, std::string> operation_map = {
-    {Operation::INSERT, "INSERT"},
-    {Operation::READ, "READ"},
-    {Operation::DELETE, "DELETE"}};
-
 int main()
 {
-    std::cout << "*********** HashTable client started ***********" << std::endl;
-
-    printMenu();
+    UserInterface::printMenu();
     char userInput;
     while (true)
     {
         std::cin >> userInput;
-        userInput = std::toupper(userInput);
-        switch (userInput)
+        switch (std::toupper(userInput))
         {
         case 'I':
             handleInsert();
@@ -77,12 +66,12 @@ void handleRequest(Request &request)
     std::cout << "------------------------------------------------" << std::endl;
     if (request.operation == Operation::INSERT)
     {
-        std::cout << "Sent request - " << operation_map[request.operation]
+        std::cout << "Sent request - " << UserInterface::operationToString(request.operation)
                   << " entry <" << request.key << "," << request.value << ">" << std::endl;
     }
     else
     {
-        std::cout << "Sent request - " << operation_map[request.operation]
+        std::cout << "Sent request - " << UserInterface::operationToString(request.operation)
                   << " key <" << request.key << ">" << std::endl;
     }
 
@@ -111,49 +100,10 @@ int getAndIncrementHead(SharedQueue *queue)
     return expected;
 }
 
-void printMenu()
-{
-    std::cout << "You can choose between the following actions:" << std::endl
-              << "------------------------------------------------" << std::endl
-              << "Use 'I' to insert an entry into the hash table" << std::endl
-              << "Use 'R' to read an entry in the hash table" << std::endl
-              << "Use 'D' to delete an entry from the hash table" << std::endl
-              << "Use 'X' to exit the program" << std::endl
-              << "------------------------------------------------" << std::endl;
-}
-
-int getKey()
-{
-    int key;
-    std::cout << "Key: ";
-    while (!(std::cin >> key))
-    {
-        std::cout << "Invalid input. Please enter an integer for the key." << std::endl
-                  << "Key: ";
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-    return key;
-}
-
-int getValue()
-{
-    int value;
-    std::cout << "Value: ";
-    while (!(std::cin >> value))
-    {
-        std::cout << "Invalid input. Please enter an integer for the value." << std::endl
-                  << "Value: ";
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-    return value;
-}
-
 void handleInsert()
 {
-    int key = getKey();
-    int value = getValue();
+    int key = UserInterface::getKey();
+    int value = UserInterface::getValue();
     Request request{Operation::INSERT, key, value};
     handleRequest(request);
 
@@ -166,7 +116,7 @@ void handleInsert()
 
 void handleRead()
 {
-    int key = getKey();
+    int key = UserInterface::getKey();
     Request request{Operation::READ, key, 0};
     handleRequest(request);
 
@@ -183,7 +133,7 @@ void handleRead()
 
 void handleDelete()
 {
-    int key = getKey();
+    int key = UserInterface::getKey();
     Request request{Operation::DELETE, key, 0};
     handleRequest(request);
 

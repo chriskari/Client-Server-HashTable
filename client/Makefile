@@ -6,7 +6,7 @@ CFLAGS = -Wall -g -std=c++17 -Icommon
 TARGET = client_program
 
 # Source and object files
-SRC = client.cpp
+SRC = client.cpp UserInterface.cpp
 OBJ = $(SRC:.cpp=.o)
 
 # Default target to build the executable
@@ -17,7 +17,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET)
 
 # Rule to compile .cpp files into .o files
-%.o: %.cpp common/shared.h
+%.o: %.cpp common/shared.h UserInterface.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up the build files
