@@ -8,6 +8,7 @@
 #include <cstring>
 #include <limits>
 #include <atomic>
+#include <mutex>
 
 enum class Operation
 {
@@ -23,6 +24,11 @@ struct Request
     int value;
     bool result;
     bool processed;
+    std::mutex request_mutex;
+
+    Request() : result(false), processed(false) {}
+    Request(Operation op, int k, int v)
+        : operation(op), key(k), value(v), result(false), processed(false) {}
 };
 
 struct SharedQueue

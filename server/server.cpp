@@ -1,8 +1,64 @@
 #include "../common/shared.h"
 #include "hash_table.h"
+#include <thread>
+#include <vector>
 
+const int MAX_THREADS = 4;
 void processRequest(HashTable &hashTable, Request &request);
 int getTableSize();
+
+void serverThread(HashTable &hashTable, SharedQueue *queue)
+{
+    while (true)
+    {
+        if (!queue->isEmpty())
+        {
+            int currentTail = queue->tail.load();
+            int currentHead = queue->head.load();
+
+            // For e.g. 3 running threads the first 3 elements in the queue need to be checked for new requests at most
+            const int MAX_ITERATIONS = MAX_THREADS;
+            int iterations = 0;
+            int index = currentTail;
+
+            while (index != currentHead && iterations < MAX_ITERATIONS)
+            {
+                Request &request = queue->requests[index];
+
+                if (!request.processed)
+                {
+                    // Try locking the request for processing
+                    if (request.request_mutex.try_lock())
+                    {
+                        // Mutex successfully locked, process the request object
+                        processRequest(hashTable, request);
+                        request.request_mutex.unlock();
+
+                        // Re-check the tail in case another thread updated it
+                        int latestTail = queue->tail.load();
+                        if (index == latestTail)
+                        {
+                            // Advance the tail to the next unprocessed request
+                            int newTail = latestTail;
+                            do
+                            {
+                                newTail = (newTail + 1) % SharedQueue::QUEUE_SIZE;
+                            } while (newTail != currentHead && queue->requests[newTail].processed);
+
+                            // Update the tail: if no unprocessed request was found, set tail to head
+                            queue->tail.store(newTail == currentHead ? currentHead : newTail);
+                        }
+                        break;
+                    }
+                }
+
+                index = (index + 1) % SharedQueue::QUEUE_SIZE;
+                iterations++;
+            }
+        }
+        usleep(100);
+    }
+}
 
 int main()
 {
@@ -26,27 +82,19 @@ int main()
     std::cout << "*********** HashTable server started ***********" << std::endl;
     std::cout << "------------------------------------------------" << std::endl;
 
-    while (true)
+    std::vector<std::thread> threads;
+    for (int i = 0; i < MAX_THREADS; i++)
     {
-        if (!queue->isEmpty())
-        {
-            int currentTail = queue->tail.load();
-            Request &request = queue->requests[currentTail];
-
-            if (!request.processed)
-            {
-                processRequest(hashTable, request);
-                request.processed = true;
-                queue->tail.store((currentTail + 1) % SharedQueue::QUEUE_SIZE);
-            }
-        }
-        usleep(100);
+        threads.emplace_back(serverThread, std::ref(hashTable), queue);
     }
 
+    for (auto &thread : threads)
+    {
+        thread.join();
+    }
     munmap(queue, shm_SIZE);
     close(shm_fd);
     shm_unlink(shm_name);
-
     return 0;
 }
 
@@ -68,7 +116,7 @@ void processRequest(HashTable &hashTable, Request &request)
         std::cout << "Processed request: Delete key <" << request.key << "> - " << (request.result ? "Success!" : "Failure!") << std::endl;
         break;
     default:
-        request.result = false; // Unsupported operation
+        request.result = false;
     }
 
     request.processed = true;
@@ -86,4 +134,4 @@ int getTableSize()
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
     return tableSize;
-};
+}

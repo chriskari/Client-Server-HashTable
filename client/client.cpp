@@ -2,6 +2,7 @@
 #include <map>
 
 void handleRequest(Request &request);
+int getAndIncrementHead(SharedQueue *queue);
 void printMenu();
 int getKey();
 int getValue();
@@ -66,11 +67,12 @@ void handleRequest(Request &request)
         usleep(100);
     }
 
-    int currentHead = queue->head.load();
-    request.processed = false;
-    queue->requests[currentHead] = request;
+    int currentHead = getAndIncrementHead(queue);
     Request &sharedRequest = queue->requests[currentHead];
-    queue->head.store((currentHead + 1) % SharedQueue::QUEUE_SIZE);
+    sharedRequest.operation = request.operation;
+    sharedRequest.key = request.key;
+    sharedRequest.value = request.value;
+    sharedRequest.processed = false;
 
     std::cout << "------------------------------------------------" << std::endl;
     if (request.operation == Operation::INSERT)
@@ -88,10 +90,25 @@ void handleRequest(Request &request)
     {
         usleep(100);
     }
-    request = sharedRequest;
+    request.result = sharedRequest.result;
+    request.operation = sharedRequest.operation;
+    request.key = sharedRequest.key;
+    request.value = sharedRequest.value;
+    request.processed = sharedRequest.processed;
 
     munmap(queue, shm_SIZE);
     close(shm_fd);
+}
+
+int getAndIncrementHead(SharedQueue *queue)
+{
+    int expected, newValue;
+    do
+    {
+        expected = queue->head.load();
+        newValue = (expected + 1) % SharedQueue::QUEUE_SIZE;
+    } while (!queue->head.compare_exchange_weak(expected, newValue));
+    return expected;
 }
 
 void printMenu()

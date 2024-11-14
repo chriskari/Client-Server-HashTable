@@ -15,7 +15,7 @@ struct HashItem
 struct HashBucket
 {
     std::list<HashItem> items;
-    mutable std::shared_mutex mutex; // Per-bucket mutex for thread safety
+    mutable std::shared_mutex mutex;
 };
 
 class HashTable
