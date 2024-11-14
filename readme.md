@@ -1,6 +1,6 @@
 # Client-Server-HashTable
 
-This project implements a client-server architecture where the server manages a hash table, while the client interacts with the server by sending requests via shared memory. In the shared memory, a CyclicQueue with a fixed size is used to store incoming requests from the clients and the corresponding responses from the server. This cyclic queue supports concurrent access, allowing multiple clients to enqueue new requests simultaneously while multiple server threads can process and dequeue these requests concurrently. The hash table supports concurrent operations (insert, read, delete), using a readers-writer lock for thread safety. Collisions in the hash table are resolved using linked lists.
+This project implements a client-server architecture where the server manages a hash table, while the client interacts with the server by sending requests via shared memory. In the shared memory, a circular queue with a fixed size is used to store incoming requests from the clients and the corresponding responses from the server. This circular queue supports concurrent access, allowing multiple clients to enqueue new requests simultaneously while multiple server threads can process and dequeue these requests parallelly. The hash table supports concurrent operations (insert, read, delete), using a readers-writer lock for thread safety. Collisions in the hash table are resolved using linked lists.
 
 ## Server
 ### Build Instructions
